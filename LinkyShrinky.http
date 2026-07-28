@@ -1,0 +1,6 @@
+@LinkyShrinky_HostAddress = http://localhost:5101
+
+GET {{LinkyShrinky_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
