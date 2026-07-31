@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting.Internal;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace LinkyShrinky
 {
@@ -12,6 +14,12 @@ namespace LinkyShrinky
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", options =>
+                {
+                    //Path to redirect user if they try to hit a page that requires auth without being authed
+                    options.LoginPath = "/" + adminPage;
+                });
+
             // Add services to the container.
             builder.Services.AddAuthorization();
 
@@ -21,11 +29,16 @@ namespace LinkyShrinky
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseForwardedHeaders();
             
+            //Load links from urls.json
             LinkStore linkStore = new LinkStore("urls.json");
 
+            //Serve wwwroot/admin to path defined by adminPage variable
+            //This allows wwwroot/admin to hold the dashboard files, even if the adminPage variable is something else
+            //such as "administration"
             app.UseDefaultFiles(new DefaultFilesOptions()
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.WebRootPath, "admin")),
@@ -38,6 +51,7 @@ namespace LinkyShrinky
                 RequestPath = "/" + adminPage
             });
 
+            //Login attempt
             app.MapPost("/" + adminPage + "/login", async (HttpContext context) =>
             {
                 var form = await context.Request.ReadFormAsync();
@@ -45,9 +59,30 @@ namespace LinkyShrinky
                 var username = form["username"];
                 var password = form["password"];
 
-                //TODO: Auth, issue cookie
+                //TODO: Auth
+                if (username == "admin")
+                {
 
-                return Results.Redirect("/" + adminPage + "/dashboard");
+                    //Issue cookie
+                    var claims = new[]
+                    {
+                        new Claim(ClaimTypes.Name, username),
+                        new Claim(ClaimTypes.Role, "Admin")
+                    };
+
+                    var identity = new ClaimsIdentity(claims, "Cookies");
+
+                    var principal = new ClaimsPrincipal(identity);
+
+                    await context.SignInAsync("Cookies", principal);
+
+                    return Results.Redirect("/" + adminPage + "/dashboard");
+                }
+                else
+                {
+                    return Results.Redirect("/" + adminPage + "?error=1");
+                }
+
             });
 
             //TODO: Logout
@@ -84,12 +119,12 @@ namespace LinkyShrinky
                     Console.WriteLine("Failed to add!");
                     return Results.Conflict(result.Error);
                 }
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             app.MapGet("api/links", () =>
             {
                 return linkStore.shortenedLinks;
-            });
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
             
 
             app.RunAsync();
