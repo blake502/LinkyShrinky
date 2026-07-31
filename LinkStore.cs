@@ -76,30 +76,36 @@ namespace LinkyShrinky
                     Console.WriteLine("[WARN]: Tried to add slug {0}, but it already exists!", slug);
                     return new AddLinkResult() { Success = false, Error = "Slug already exists!" };
                 }
-                else
-                {
-                    if (string.IsNullOrWhiteSpace(slug))
-                    {
-                        int failCount = 0;
-                        int length = 3;
-                        do
-                        {
-                            slug = random.GetString("abcdefghjkmnpqrstuvwxyz23456789", length);//Avoid i l 1 and o 0 to avoid look-alikes
-                            failCount++;
-                            if (failCount >= 32)
-                            {
-                                failCount = 0;
-                                length++;
-                            }
-                        }
-                        while (shortenedLinks.ContainsKey(slug));
-                    }
 
-                    dirty = true;
-                    shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = redirect });
-                    Save();
-                    return new AddLinkResult() { Success = true, Slug = slug, Redirect = redirect };
+                Uri? uri;
+                if (!Uri.TryCreate(redirect, UriKind.Absolute, out uri) || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                {
+                    Console.WriteLine("[WARN]: Could not create URI!", slug);
+                    return new AddLinkResult() { Success = false, Error = "Could not create URI!" };
                 }
+
+                if (string.IsNullOrWhiteSpace(slug))
+                {
+                    int failCount = 0;
+                    int length = 3;
+                    do
+                    {
+                        slug = random.GetString("abcdefghjkmnpqrstuvwxyz23456789", length); //Avoid i l 1 and o 0 to avoid look-alikes
+                        failCount++;
+                        if (failCount >= 32)
+                        {
+                            failCount = 0;
+                            length++;
+                        }
+                    }
+                    while (shortenedLinks.ContainsKey(slug));
+                }
+
+                dirty = true;
+                shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = uri.ToString() });
+                Save();
+                return new AddLinkResult() { Success = true, Slug = slug, Redirect = uri.ToString() };
+
             }
         }
     }
