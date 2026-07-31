@@ -2,12 +2,16 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>LinkyShrinky - Login</title>
 </head>
 <body>
     <form method="post" action="login">
         Please log in
         <br>
+
+        <div id="error" style="display: none; color: red">
+            Incorrect username or password
+        </div>
 
         <label>Username</label>
         <input type="text" name="username">
@@ -17,5 +21,15 @@
 
         <input type="submit" value="Login">
     </form>
+
+    <script>
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.get("error") == 1) {
+                document.getElementById("error").style.display = "block";
+            }
+        }
+    </script>
 </body>
 </html>

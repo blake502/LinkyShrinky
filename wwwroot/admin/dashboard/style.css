@@ -1,0 +1,28 @@
+﻿body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+table {
+    table-layout: fixed;
+    width: 90%;
+    margin: 10px auto;
+    border-collapse: collapse;
+}
+
+th, td {
+    vertical-align: top;
+    padding: 0.6em;
+    border: 1px solid #999999;
+    overflow: clip;
+}
+
+tr :nth-child(1),
+tr :nth-child(3) {
+    text-align: left;
+    width: 5%
+}
+
+tr :nth-child(2) {
+    text-align: left;
+    width: 40%
+}
