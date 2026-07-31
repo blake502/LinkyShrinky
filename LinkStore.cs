@@ -52,6 +52,20 @@ namespace LinkyShrinky
             }
         }
 
+        public bool Delete(string slug)
+        {
+            lock (linksLock)
+            {
+                if (shortenedLinks.ContainsKey(slug))
+                {
+                    shortenedLinks.Remove(slug);
+                    Save();
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public void Save()
         {
             lock (linksLock)

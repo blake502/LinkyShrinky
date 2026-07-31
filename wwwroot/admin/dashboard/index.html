@@ -6,15 +6,16 @@
     <link href="style.css" rel="stylesheet"/>
 </head>
 <body>
-    You're now logged in!
+    <h1>LinkyShrink Admin Dashboard</h1>
 
-    <div>
+    <div id="formdiv">
         <form id="form">
-            <label>Shorten a URL</label>
+            <label><b>Shorten a URL</b></label>
+            <br>
             <label>Redirect:</label>
-            <input type="text" name="redirect">
+            <input type="url" name="redirect" required>
             <label>Slug:</label>
-            <input type="text" name="slug">
+            <input type="text" name="slug" pattern="[a-zA-Z0-9_-]*" autocomplete="off">
             <input type="submit" value="Shorten!">
         </form>
     </div>
@@ -27,6 +28,7 @@
                 <th>Hits</th>
                 <th>Created</th>
                 <th>Last Hit</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody id="tablebody">
@@ -70,35 +72,66 @@
 
             const keys = Object.keys(data);
             for (var i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                const value = data[key];
+
                 var row = document.createElement("tr");
 
                 var slugElem = document.createElement("td");
-                slugElem.textContent = keys[i];
+                slugElem.textContent = key;
                 row.appendChild(slugElem);
 
                 var redirectElem = document.createElement("td");
                 var redirectLinkElem = document.createElement("a");
-                var link = data[keys[i]].redirect
+                var link = value.redirect
                 redirectLinkElem.href = link;
                 redirectLinkElem.textContent = link;
                 redirectElem.appendChild(redirectLinkElem);
                 row.appendChild(redirectElem);
 
                 var hitsElem = document.createElement("td");
-                hitsElem.textContent = data[keys[i]].hits;
+                hitsElem.textContent = value.hits;
                 row.appendChild(hitsElem);
 
                 var createdElem = document.createElement("td");
-                createdElem.textContent = new Date(data[keys[i]].created).toLocaleString();
+                createdElem.textContent = new Date(value.created).toLocaleString();
                 row.appendChild(createdElem);
 
                 var lastHitElem = document.createElement("td");
-                var lastHit = data[keys[i]].lastHit;
+                var lastHit = value.lastHit;
                 if (lastHit == null)
                     lastHitElem.textContent = "N/A";
                 else
                     lastHitElem.textContent = new Date(lastHit).toLocaleString();
                 row.appendChild(lastHitElem);
+
+                var actionsElem = document.createElement("td");
+
+                var deleteElem = document.createElement("input");
+                deleteElem.type = "submit";
+                deleteElem.value = "del";
+                deleteElem.style.width = "50%";
+                deleteElem.onclick = async function () {
+                    const response = await fetch("/api/links/" + key, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+                }
+
+                var copyElem = document.createElement("input");
+                copyElem.type = "submit";
+                copyElem.value = "copy";
+                copyElem.style.width = "50%";
+                copyElem.onclick = function() {
+                    navigator.clipboard.writeText(window.location.host + "/" + key);
+                }
+
+                actionsElem.appendChild(deleteElem);
+                actionsElem.appendChild(copyElem);
+
+                row.appendChild(actionsElem);
 
                 tableBodyElem.appendChild(row);
             }

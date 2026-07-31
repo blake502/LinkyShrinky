@@ -106,6 +106,16 @@ namespace LinkyShrinky
                 }
             });
 
+            app.MapDelete("api/links/{slug}", (string slug) =>
+            {
+                bool result = linkStore.Delete(slug);
+
+                if (result)
+                    return Results.NoContent();
+                else
+                    return Results.Conflict();
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
+
             app.MapPost("api/links", (AddLinkRequest addLinkRequest) =>
             {
                 AddLinkResult result = linkStore.Add(addLinkRequest.Redirect, addLinkRequest.Slug ?? "");

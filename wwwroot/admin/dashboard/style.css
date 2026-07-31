@@ -22,7 +22,31 @@ tr :nth-child(3) {
     width: 5%
 }
 
+tr :nth-child(6) {
+    text-align: left;
+    width: 10%
+}
+
 tr :nth-child(2) {
     text-align: left;
     width: 40%
+}
+
+tbody tr:nth-child(2n+1) {
+    background-color: aliceblue;
+}
+
+#formdiv {
+    border: 1px solid #999999;
+    width: 90%;
+    margin: 10px auto;
+}
+
+form {
+    padding: 1em;
+}
+
+h1 {
+    width: 90%;
+    margin: 10px auto;
 }
