@@ -8,6 +8,17 @@
 <body>
     You're now logged in!
 
+    <div>
+        <form id="form">
+            <label>Shorten a URL</label>
+            <label>Redirect:</label>
+            <input type="text" name="redirect">
+            <label>Slug:</label>
+            <input type="text" name="slug">
+            <input type="submit" value="Shorten!">
+        </form>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -24,6 +35,26 @@
     </table>
 
     <script>
+
+        const form = document.getElementById("form");
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+
+            const data = {
+                redirect: form.redirect.value,
+                slug: form.slug.value
+            };
+
+            const response = await fetch("/api/links", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+        })
+
         window.onload = async function () {
             const response = await fetch('/api/links', { method: 'GET' });
 
