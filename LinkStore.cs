@@ -59,6 +59,7 @@ namespace LinkyShrinky
                 if (shortenedLinks.ContainsKey(slug))
                 {
                     shortenedLinks.Remove(slug);
+                    dirty = true;
                     Save();
                     return true;
                 }
