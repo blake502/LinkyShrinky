@@ -9,10 +9,13 @@ namespace LinkyShrinky
 {
     public class Program
     {
-        const string adminPage = "admin";
+        static string? adminPage = Environment.GetEnvironmentVariable("ADMIN_PAGE");
 
         public static void Main(string[] args)
         {
+            if (adminPage == null)
+                adminPage = "admin";
+
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", options =>
@@ -113,14 +116,9 @@ namespace LinkyShrinky
                 }
             });
 
-            app.MapDelete("api/links/{slug}", (string slug) =>
+            app.MapGet("api/links", () =>
             {
-                bool result = linkStore.Delete(slug);
-
-                if (result)
-                    return Results.NoContent();
-                else
-                    return Results.Conflict();
+                return linkStore.shortenedLinks;
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             app.MapPost("api/links", (AddLinkRequest addLinkRequest) =>
@@ -138,11 +136,15 @@ namespace LinkyShrinky
                 }
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
-            app.MapGet("api/links", () =>
+            app.MapDelete("api/links/{slug}", (string slug) =>
             {
-                return linkStore.shortenedLinks;
+                bool result = linkStore.Delete(slug);
+
+                if (result)
+                    return Results.NoContent();
+                else
+                    return Results.Conflict();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
-            
 
             app.RunAsync();
 
