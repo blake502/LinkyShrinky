@@ -36,12 +36,15 @@ namespace LinkyShrinky
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseForwardedHeaders();
-            
+
+            if (!Directory.Exists("config"))
+                Directory.CreateDirectory("config");
+
             //Load links from urls.json
-            LinkStore linkStore = new LinkStore("urls.json");//app
+            LinkStore linkStore = new LinkStore("config/urls.json");//app
 
             //Create authenticator
-            Authenticator authenticator = new Authenticator("user.json");
+            Authenticator authenticator = new Authenticator("config/user.json");
 
             //Serve wwwroot/admin to path defined by adminPage variable
             //This allows wwwroot/admin to hold the dashboard files, even if the adminPage variable is something else
