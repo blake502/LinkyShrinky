@@ -87,6 +87,9 @@ services:
       - 8080:8080
     environment:
       - ADMIN_PAGE=admin #The admin dashboard path
+    volumes:
+      - ./urls.json:/app/urls.json
+      - ./user.json:/app/user.json
 ```
 
 # TODO
