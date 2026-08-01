@@ -85,11 +85,11 @@ services:
     container_name: linkyshrinky
     ports:
       - 8080:8080
+    volumes:
+      - ./config:/app/config
+      - ./keys:/home/app/.aspnet/DataProtection-Keys
     environment:
       - ADMIN_PAGE=admin #The admin dashboard path
-    volumes:
-      - ./urls.json:/app/urls.json
-      - ./user.json:/app/user.json
 ```
 
 # TODO
