@@ -3,24 +3,26 @@
 <head>
     <meta charset="utf-8" />
     <title>LinkyShrinky - Login</title>
+    <link href="style.css" rel="stylesheet" />
 </head>
 <body>
-    <form method="post" action="login">
-        Please log in
-        <br>
+    <div class="login-card">
+        <form method="post" action="login">
+            <h1>Login</h1>
 
-        <div id="error" style="display: none; color: red">
-            Incorrect username or password
-        </div>
+            <div class="error" id="error" style="display: none">
+                Incorrect username or password
+            </div>
 
-        <label>Username</label>
-        <input type="text" name="username">
+            <label for="username">Username</label>
+            <input id="username" type="text" name="username" autocomplete="username" autofocus required>
 
-        <label>Password</label>
-        <input type="password" name="password">
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" autocomplete="password" required>
 
-        <input type="submit" value="Login">
-    </form>
+            <input type="submit" value="Sign In">
+        </form>
+    </div>
 
     <script>
         window.onload = function () {

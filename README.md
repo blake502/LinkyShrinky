@@ -99,4 +99,3 @@ services:
 - Add logout path
 - Fix admin path reservation
 - File locking
-- Make the admin dashboard prettier

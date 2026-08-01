@@ -8,33 +8,36 @@
 <body>
     <h1>LinkyShrink Admin Dashboard</h1>
 
-    <div id="formdiv">
+    <div class="card">
         <form id="form">
-            <label><b>Shorten a URL</b></label>
-            <br>
-            <label>Redirect:</label>
-            <input type="url" name="redirect" required>
-            <label>Slug:</label>
-            <input type="text" name="slug" pattern="[a-zA-Z0-9_-]*" autocomplete="off">
-            <input type="submit" value="Shorten!">
+            <h2>Shorten a URL</h2>
+
+            <label for="redirect">Redirect URL</label>
+            <input id="redirect" type="url" name="redirect" placeholder="https://example.com" required>
+
+            <label for="slug">Custom Slug (optional)</label>
+            <input id="slug" type="text" name="slug" pattern="[a-zA-Z0-9_-]*" autocomplete="off" placeholder="ex">
+
+            <input type="submit" value="Create Short Link">
         </form>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Slug</th>
-                <th>Redirect</th>
-                <th>Hits</th>
-                <th>Created</th>
-                <th>Last Hit</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="tablebody">
-
-        </tbody>
-    </table>
+    <div class="card" id="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Slug</th>
+                    <th>Redirect</th>
+                    <th>Hits</th>
+                    <th>Created</th>
+                    <th>Last Hit</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tablebody">
+            </tbody>
+        </table>
+    </div>
 
     <script>
         const form = document.getElementById("form");
@@ -114,7 +117,7 @@
 
                 var deleteElem = document.createElement("input");
                 deleteElem.type = "submit";
-                deleteElem.value = "del";
+                deleteElem.value = "Delete";
                 deleteElem.style.width = "50%";
                 deleteElem.onclick = async function () {
                     const response = await fetch("/api/links/" + key, {
@@ -128,9 +131,9 @@
 
                 var copyElem = document.createElement("input");
                 copyElem.type = "submit";
-                copyElem.value = "copy";
+                copyElem.value = "Copy";
                 copyElem.style.width = "50%";
-                copyElem.onclick = function() {
+                copyElem.onclick = function () {
                     navigator.clipboard.writeText(window.location.host + "/" + key);
                 }
 
