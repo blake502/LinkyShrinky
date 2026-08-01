@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting.Internal;
 using System.ComponentModel.DataAnnotations;
@@ -34,7 +35,10 @@ namespace LinkyShrinky
             app.UseForwardedHeaders();
             
             //Load links from urls.json
-            LinkStore linkStore = new LinkStore("urls.json");
+            LinkStore linkStore = new LinkStore("urls.json");//app
+
+            //Create authenticator
+            Authenticator authenticator = new Authenticator("user.json");
 
             //Serve wwwroot/admin to path defined by adminPage variable
             //This allows wwwroot/admin to hold the dashboard files, even if the adminPage variable is something else
@@ -56,13 +60,16 @@ namespace LinkyShrinky
             {
                 var form = await context.Request.ReadFormAsync();
 
-                var username = form["username"];
-                var password = form["password"];
+                string? username = form["username"];
+                string? password = form["password"];
 
-                //TODO: Auth
-                if (username == "admin")
+                if (username == null || password == null)
+                    return Results.BadRequest();
+
+                var results = authenticator.Verify(username, password);
+                
+                if (results)
                 {
-
                     //Issue cookie
                     var claims = new[]
                     {
@@ -139,7 +146,7 @@ namespace LinkyShrinky
 
             app.RunAsync();
 
-            //Save links/hits every 15 seconds
+            //Save links/hits every 15 seconds (doesn't actually save unless it's marked "dirty")
             while (true)
             {
                 Thread.Sleep(1000 * 15);
