@@ -97,6 +97,5 @@ services:
 - Clean up first time setup admin account
 - Add logout path
 - Fix admin path reservation
-- Clean up save loop
 - File locking
 - Make the admin dashboard prettier

@@ -9,14 +9,14 @@ namespace LinkyShrinky
         readonly object linksLock = new();
         string jsonFilePath;
         Random random;
-        bool dirty;
+
+        private volatile bool _dirty;
 
         public LinkStore(string jsonFilePath)
         {
             random = new Random();
             this.jsonFilePath = jsonFilePath;
             shortenedLinks = this.Load();
-            dirty = false;
         }
 
         public string? ResolveRedirect(string slug)
@@ -25,9 +25,11 @@ namespace LinkyShrinky
             {
                 if (shortenedLinks.ContainsKey(slug))
                 {
-                    dirty = true;
                     shortenedLinks[slug].Hits++;
                     shortenedLinks[slug].LastHit = DateTimeOffset.UtcNow;
+
+                    _dirty = true;
+
                     return shortenedLinks[slug].Redirect;
                 }
                 else
@@ -59,7 +61,6 @@ namespace LinkyShrinky
                 if (shortenedLinks.ContainsKey(slug))
                 {
                     shortenedLinks.Remove(slug);
-                    dirty = true;
                     Save();
                     return true;
                 }
@@ -67,18 +68,26 @@ namespace LinkyShrinky
             }
         }
 
+        public void Flush()
+        {
+            if (!_dirty)
+                return;
+
+            lock (linksLock)
+            {
+                Save();
+                _dirty = false;
+            }
+        }
+
         public void Save()
         {
             lock (linksLock)
             {
-                if (dirty)
-                {
-                    //Writing to a .tmp file, then moving it over the real file
-                    //introduces atomic saving
-                    File.WriteAllText(jsonFilePath + ".tmp", JsonSerializer.Serialize(shortenedLinks, new JsonSerializerOptions { WriteIndented = true }));
-                    File.Move(jsonFilePath + ".tmp", jsonFilePath, true);
-                    dirty = false;
-                }
+                //Writing to a .tmp file, then moving it over the real file
+                //introduces atomic saving
+                File.WriteAllText(jsonFilePath + ".tmp", JsonSerializer.Serialize(shortenedLinks, new JsonSerializerOptions { WriteIndented = true }));
+                File.Move(jsonFilePath + ".tmp", jsonFilePath, true);
             }
         }
 
@@ -116,7 +125,6 @@ namespace LinkyShrinky
                     while (shortenedLinks.ContainsKey(slug));
                 }
 
-                dirty = true;
                 shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = uri.ToString() });
                 Save();
                 return new AddLinkResult() { Success = true, Slug = slug, Redirect = uri.ToString() };

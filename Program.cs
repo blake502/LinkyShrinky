@@ -149,15 +149,20 @@ namespace LinkyShrinky
                     return Results.Conflict();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
-            app.RunAsync();
+            PeriodicTimer saveTimer = new PeriodicTimer(TimeSpan.FromSeconds(15));
 
-            //Save links/hits every 15 seconds (doesn't actually save unless it's marked "dirty")
-            while (true)
+            Task.Run(async () =>
             {
-                Thread.Sleep(1000 * 15);
-                Console.WriteLine("Saving...");
+                while (await saveTimer.WaitForNextTickAsync())
+                    linkStore.Flush();
+            });
+
+            app.Lifetime.ApplicationStopping.Register(() =>
+            {
                 linkStore.Save();
-            }
+            });
+
+            app.Run();
         }
     }
     public class AddLinkRequest
