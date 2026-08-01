@@ -1,7 +1,7 @@
 # LinkyShrinky
 A very lightweight URL shortener, made with ASP.NET Core.
 
-**LinkyShrinky** uses approximately 20 MB of RAM and negligible CPU usage, making it a great choice for lightweight single-core VPSs.
+**LinkyShrinky** uses approximately 20-60 MB of RAM and negligible CPU usage, making it a great choice for single-core VPSs with little RAM.
 
 # Purpose
 I created this project to replace my existing URL shortener, which used a MySQL database requiring too much RAM (over 100 MB) on my VPS.
@@ -90,6 +90,7 @@ services:
       - ./keys:/home/app/.aspnet/DataProtection-Keys
     environment:
       - ADMIN_PAGE=admin #The admin dashboard path
+      - DOTNET_GCHeapHardLimit=134217728 #Limit RAM usage to 128MiB, useful for systems with little RAM (it rarely exceeds even half of this limit)
 ```
 
 # TODO
