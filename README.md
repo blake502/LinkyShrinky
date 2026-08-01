@@ -100,4 +100,3 @@ services:
 - Clean up save loop
 - File locking
 - Make the admin dashboard prettier
-- Automatically refresh admin dashboard on mutation

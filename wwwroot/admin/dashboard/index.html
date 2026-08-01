@@ -37,7 +37,6 @@
     </table>
 
     <script>
-
         const form = document.getElementById("form");
 
         form.addEventListener("submit", async e => {
@@ -55,9 +54,13 @@
                 },
                 body: JSON.stringify(data)
             });
+
+            reload();
         })
 
-        window.onload = async function () {
+        window.onload = reload;
+
+        async function reload() {
             const response = await fetch('/api/links', { method: 'GET' });
 
             if (response.status == 401) {
@@ -69,6 +72,8 @@
             const data = await response.json();
 
             const tableBodyElem = document.getElementById("tablebody");
+
+            tableBodyElem.innerHTML = "";
 
             const keys = Object.keys(data);
             for (var i = 0; i < keys.length; i++) {
@@ -118,6 +123,7 @@
                             "Content-Type": "application/json"
                         }
                     });
+                    reload();
                 }
 
                 var copyElem = document.createElement("input");
