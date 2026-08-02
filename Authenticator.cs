@@ -39,6 +39,8 @@ namespace LinkyShrinky
 
         public bool Verify(string username, string password)
         {
+            username = username.ToLower();
+
             if (userCreds.username == null || userCreds.hashedPassword == null)
             {
                 userCreds.hashedPassword = passwordHasher.HashPassword(username, password);
