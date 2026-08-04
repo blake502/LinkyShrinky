@@ -96,6 +96,5 @@ services:
 # TODO
 - Clean up API
 - Clean up first time setup admin account
-- Add logout path
 - Fix admin path reservation
 - File locking

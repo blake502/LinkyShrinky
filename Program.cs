@@ -98,7 +98,11 @@ namespace LinkyShrinky
 
             });
 
-            //TODO: Logout
+            app.MapPost("/" + adminPage + "/logout", async (HttpContext context) =>
+            {
+                await context.SignOutAsync("Cookies");
+                return Results.Redirect("/" + adminPage);
+            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             //TODO: Probably not regex this. Find another way to reserve admin path
             app.MapGet("/{slug:regex(^(?!" + adminPage + "$).+)}", (string slug, HttpContext context) =>
