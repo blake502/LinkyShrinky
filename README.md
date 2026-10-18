@@ -57,8 +57,8 @@ Creates a new shortened link.
 ```
 {
     "success": true,
-    "slug": "ca6",
-    "redirect": "https://google.com/",
+    "slug": "ex",
+    "redirect": "https://example.com",
     "error": null
 }
 ```
@@ -93,8 +93,53 @@ services:
       - DOTNET_GCHeapHardLimit=134217728 #Limit RAM usage to 128MiB, useful for systems with little RAM (it rarely exceeds even half of this limit)
 ```
 
+# Reverse Proxy
+While not *strictly* necessary, it is recommended to run LinkyShrinky behind a reverse proxy, such as [nginx](https://nginx.org/).
+
+## Example nginx configuration
+The following example nginx configuration for LinkyShrinky automatically redirects HTTP requests to HTTPS
+
+Static files in the `/etc/nginx/example.com` directory will be served as-is. Therefore, a static homepage can be placed there.
+
+If a request does not correspond to a file in that directory, the request will be passed to LinkyShrinky.
+
+```
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    root /etc/nginx/example.com;
+
+    location / {
+        try_files $uri $uri/ @linkyshrinky;
+    }
+
+    location @linkyshrinky {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
 # TODO
 - Clean up API
 - Clean up first time setup admin account
 - Fix admin path reservation
 - File locking
+- Improve random slug generation
