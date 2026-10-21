@@ -76,6 +76,8 @@ There are several things you should consider configuring.
 
 ## Environment Variable
 `ADMIN_PAGE` will change the path for the admin dashboard. This value defaults to `admin` so the default admin dashboard is accessible at `example.com/admin`
+`DOTNET_GCHeapHardLimit` limits the RAM used by the container.
+`TRUSTED_PROXIES` allows you to configure trusted proxies by providing a comma-separated list of IP ranges with prefixes, or IPs. ASP.NET Core accepts `127.0.0.0/8` and `::1` by default. An asterisk (`*`) can be provided to trust all addresses, although this is discouraged.
 
 ## Example docker-compose.yml
 ```
@@ -91,6 +93,7 @@ services:
     environment:
       - ADMIN_PAGE=admin #The admin dashboard path
       - DOTNET_GCHeapHardLimit=134217728 #Limit RAM usage to 128MiB, useful for systems with little RAM (it rarely exceeds even half of this limit)
+      - TRUSTED_PROXIES=127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,::1 #Comma-separated list of trusted reverse proxy ranges and/or IPs
 ```
 
 # Reverse Proxy
@@ -140,6 +143,8 @@ server {
 # TODO
 - Clean up API
 - Clean up first time setup admin account
+- Consider IPv6 compatibility
+- Cookie hardening
 - Fix admin path reservation
 - File locking
 - Improve random slug generation

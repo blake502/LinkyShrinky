@@ -11,7 +11,7 @@
             <h1>Login</h1>
 
             <div class="error" id="error" style="display: none">
-                Incorrect username or password
+                Error occurred!
             </div>
 
             <label for="username">Username</label>
@@ -25,11 +25,21 @@
     </div>
 
     <script>
-        window.onload = function () {
+        window.onload = function() {
             const params = new URLSearchParams(window.location.search);
 
-            if (params.get("error") == 1) {
-                document.getElementById("error").style.display = "block";
+            var errorElem = document.getElementById("error");
+            var errorCode = params.get("error");
+            if (errorElem != null && errorCode != null) {
+                if (errorCode == "1") {
+                    errorElem.textContent = "Incorrect username or password"
+                }
+
+                if (errorCode == "2") {
+                    errorElem.textContent = "Too many attempts!"
+                }
+
+                errorElem.style.display = "block";
             }
         }
     </script>
