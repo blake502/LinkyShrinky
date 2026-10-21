@@ -108,6 +108,7 @@ namespace LinkyShrinky
 
             // Configure the HTTP request pipeline.
             app.UseForwardedHeaders();
+            app.UseRateLimiter();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
