@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Net;
 using System.Threading.RateLimiting;
 using IPNetwork = System.Net.IPNetwork;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace LinkyShrinky
 {
@@ -24,12 +25,7 @@ namespace LinkyShrinky
 
             var builder = WebApplication.CreateBuilder(args);
 
-            //Cookies
-            builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", options =>
-            {
-                //Path to redirect user if they try to hit a page that requires auth without being authed
-                options.LoginPath = "/" + adminPage;
-            });
+            builder.Services.AddDataProtection().SetApplicationName("LinkyShrinky").PersistKeysToFileSystem(new DirectoryInfo("config/keys"));
 
             //Forwarded headers
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -38,12 +34,12 @@ namespace LinkyShrinky
 
                 string[] entries = trustedProxies.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-                if(entries.Length == 0)
+                if (entries.Length == 0)
                     Console.WriteLine("[WARN] No trusted proxies configured. Please consider configuring the \"TRUSTED_PROXIES\" environment variable.");
 
                 foreach (string entry in entries)
                 {
-                    if(entry == "*")
+                    if (entry == "*")
                     {
                         options.KnownProxies.Clear();
                         options.KnownIPNetworks.Clear();
@@ -104,6 +100,74 @@ namespace LinkyShrinky
             // Add services to the container.
             builder.Services.AddAuthorization();
 
+            if (!Directory.Exists("config"))
+                Directory.CreateDirectory("config");
+
+            //Load API keys from apikeys.json
+            ApiKeyStore apiKeyStore = new ApiKeyStore("config/apikeys.json");
+
+            //Load links from urls.json
+            LinkStore linkStore = new LinkStore("config/urls.json");
+
+            //Create authenticator
+            Authenticator authenticator = new Authenticator("config/user.json");
+
+            builder.Services.AddSingleton(apiKeyStore);
+
+            var auth = builder.Services.AddAuthentication("Smart");
+
+            //Smart sceme automatically routes auth to ApiKey authentication if Bearer token is present in header
+            //Otherwise, Cookies are used
+            auth.AddPolicyScheme("Smart", "Cookie or API key", options =>
+            {
+                options.ForwardDefaultSelector = context =>
+                {
+                    string authHeader = context.Request.Headers.Authorization.ToString();
+
+                    if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        return "ApiKey";
+                    else
+                        return "Cookies";
+                };
+            });
+
+            //Cookie auth
+            auth.AddCookie("Cookies", options =>
+            {
+                options.LoginPath = "/" + adminPage;
+
+                options.Cookie.Name = "__Host-LinkyShrinky";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.Path = "/";
+
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.SlidingExpiration = false;
+
+                options.Events.OnRedirectToLogin = ctx =>
+                {
+                    if (ctx.Request.Path.StartsWithSegments("/api"))
+                        ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    else
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    return Task.CompletedTask;
+                };
+
+                options.Events.OnRedirectToAccessDenied = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
+            });
+
+            //ApiKey auth
+            auth.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthHandler>("ApiKey", null);
+
+            //Cookie-only auth
+            builder.Services.AddAuthorizationBuilder()
+                .AddPolicy("AdminCookieOnly", policy => policy.AddAuthenticationSchemes("Cookies").RequireRole("Admin"));
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -112,15 +176,6 @@ namespace LinkyShrinky
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-
-            if (!Directory.Exists("config"))
-                Directory.CreateDirectory("config");
-
-            //Load links from urls.json
-            LinkStore linkStore = new LinkStore("config/urls.json");//app
-
-            //Create authenticator
-            Authenticator authenticator = new Authenticator("config/user.json");
 
             //Require authentication for admin dashboard
             app.Use(async (context, next) =>
@@ -200,7 +255,7 @@ namespace LinkyShrinky
             {
                 await context.SignOutAsync("Cookies");
                 return Results.Redirect("/" + adminPage);
-            }).RequireAuthorization(policy => policy.RequireRole("Admin"));
+            }).RequireAuthorization("AdminCookieOnly");
 
             //TODO: Probably not regex this. Find another way to reserve admin path
             app.MapGet("/{slug:regex(^(?!" + adminPage + "$).+)}", (string slug, HttpContext context) =>
@@ -220,6 +275,29 @@ namespace LinkyShrinky
                     return Results.Redirect("/");
                 }
             });
+
+            app.MapGet("api/keys", () =>
+            {
+                return apiKeyStore.List();
+            }).RequireAuthorization("AdminCookieOnly");
+
+            app.MapPost("api/keys", (CreateKeyRequest req, HttpContext context) =>
+            {
+                string name = req.Name ?? "unknown";
+                name = name.Trim();
+                var (key, record) = apiKeyStore.Create(name);
+                context.Response.Headers.CacheControl = "no-store";
+
+                return Results.Ok(new { key, record.Id, record.Name });
+            }).RequireAuthorization("AdminCookieOnly");
+
+            app.MapDelete("api/keys/{id}", (string id) =>
+            {
+                if (apiKeyStore.Revoke(id))
+                    return Results.NoContent();
+                else
+                    return Results.NotFound();
+            }).RequireAuthorization("AdminCookieOnly");
 
             app.MapGet("api/links", () =>
             {
@@ -256,17 +334,23 @@ namespace LinkyShrinky
             Task.Run(async () =>
             {
                 while (await saveTimer.WaitForNextTickAsync())
+                {
+                    apiKeyStore.Flush();
                     linkStore.Flush();
+                }
             });
 
             app.Lifetime.ApplicationStopping.Register(() =>
             {
+                apiKeyStore.Save();
                 linkStore.Save();
             });
 
             app.Run();
         }
     }
+
+    public record CreateKeyRequest(string? Name);
     public class AddLinkRequest
     {
         [Required]
