@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace LinkyShrinky
 {
@@ -16,7 +15,12 @@ namespace LinkyShrinky
         {
             random = new Random();
             this.jsonFilePath = jsonFilePath;
-            shortenedLinks = this.Load();
+            shortenedLinks = new Dictionary<string, shortenedLink>();
+            if (File.Exists(jsonFilePath))
+            {
+                string json = File.ReadAllText(jsonFilePath);
+                shortenedLinks = JsonSerializer.Deserialize<Dictionary<string, shortenedLink>>(json) ?? new();
+            }
         }
 
         public string? ResolveRedirect(string slug)
@@ -34,23 +38,6 @@ namespace LinkyShrinky
                 }
                 else
                     return null;
-            }
-        }
-
-        Dictionary<string, shortenedLink> Load()
-        {
-            lock (linksLock)
-            {
-                if (!File.Exists(jsonFilePath))
-                    File.WriteAllText(jsonFilePath, "{}");
-
-                string json = File.ReadAllText(jsonFilePath);
-                Dictionary<string, shortenedLink>? serializedJson = JsonSerializer.Deserialize<Dictionary<string, shortenedLink>>(json);
-
-                if (serializedJson != null)
-                    return serializedJson;
-                else
-                    return new Dictionary<string, shortenedLink>();
             }
         }
 
@@ -114,7 +101,7 @@ namespace LinkyShrinky
                     int length = 3;
                     do
                     {
-                        slug = random.GetString("abcdefghjkmnpqrstuvwxyz23456789", length); //Avoid i l 1 and o 0 to avoid look-alikes
+                        slug = random.GetString("acdefghjkmnprtuvwxyz23478", length); //Avoid i l 1 and o 0 and 5 s and 9 q and 6 b to avoid look-alikes
                         failCount++;
                         if (failCount >= 32)
                         {
@@ -128,7 +115,6 @@ namespace LinkyShrinky
                 shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = uri.ToString() });
                 Save();
                 return new AddLinkResult() { Success = true, Slug = slug, Redirect = uri.ToString() };
-
             }
         }
     }

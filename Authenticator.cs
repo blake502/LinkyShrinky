@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Text.Json;
-using System.Xml.Linq;
 
 namespace LinkyShrinky
 {
     public class Authenticator
     {
         PasswordHasher<string> passwordHasher;
+        readonly object credsLock = new();
         string jsonFilePath;
 
         UserCreds userCreds;
@@ -16,25 +16,20 @@ namespace LinkyShrinky
             passwordHasher = new PasswordHasher<string>();
             userCreds = new UserCreds();
             this.jsonFilePath = jsonFilePath;
-            this.Load();
-        }
-
-        public void Load()
-        {
-            if (!File.Exists(jsonFilePath))
-                return;
-
-            string json = File.ReadAllText(jsonFilePath);
-            UserCreds? deserialized = JsonSerializer.Deserialize<UserCreds>(json);
-
-            if (deserialized != null)
-                userCreds = deserialized;
+            if(File.Exists(jsonFilePath))
+            {
+                string json = File.ReadAllText(jsonFilePath);
+                userCreds = JsonSerializer.Deserialize<UserCreds>(json) ?? new();
+            }
         }
 
         public void Save()
         {
-            File.WriteAllText(jsonFilePath + ".tmp", JsonSerializer.Serialize(userCreds, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(jsonFilePath + ".tmp", jsonFilePath, true);
+            lock (credsLock)
+            {
+                File.WriteAllText(jsonFilePath + ".tmp", JsonSerializer.Serialize(userCreds, new JsonSerializerOptions { WriteIndented = true }));
+                File.Move(jsonFilePath + ".tmp", jsonFilePath, true);
+            }
         }
 
         public bool Verify(string username, string password)
