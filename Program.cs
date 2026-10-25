@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading.RateLimiting;
 using IPNetwork = System.Net.IPNetwork;
 using Microsoft.AspNetCore.DataProtection;
+using System.Linq.Expressions;
 
 namespace LinkyShrinky
 {
@@ -301,7 +302,7 @@ namespace LinkyShrinky
 
             app.MapGet("api/links", () =>
             {
-                return linkStore.shortenedLinks;
+                return linkStore.Snapshot();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             app.MapPost("api/links", (AddLinkRequest addLinkRequest) =>
@@ -324,7 +325,7 @@ namespace LinkyShrinky
                 bool result = linkStore.Delete(slug);
 
                 if (result)
-                    return Results.NoContent();
+                    return Results.NotFound();
                 else
                     return Results.Conflict();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
@@ -334,10 +335,16 @@ namespace LinkyShrinky
             Task.Run(async () =>
             {
                 while (await saveTimer.WaitForNextTickAsync())
-                {
-                    apiKeyStore.Flush();
-                    linkStore.Flush();
-                }
+                    try
+                    {
+                        apiKeyStore.Flush();
+                        linkStore.Flush();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("[ERROR] Error while flushing cache to disk!");
+                        Console.WriteLine(ex.Message);
+                    }
             });
 
             app.Lifetime.ApplicationStopping.Register(() =>
