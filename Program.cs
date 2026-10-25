@@ -225,6 +225,7 @@ namespace LinkyShrinky
 
             app.MapGet("api/links", () =>
             {
+                context.Response.Headers.CacheControl = "no-store";
                 return linkStore.Snapshot();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 

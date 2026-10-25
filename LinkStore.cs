@@ -90,15 +90,15 @@ namespace LinkyShrinky
         {
             lock (linksLock)
             {
-                if (!slugRegex.IsMatch(slug))
+                if (!string.IsNullOrWhiteSpace(slug) && !slugRegex.IsMatch(slug))
                 {
-                    Console.WriteLine("[ERROR] Slug uses illegal characters!", slug);
+                    Console.WriteLine("[ERROR] Slug uses illegal characters!");
                     return new AddLinkResult() { Success = false, Error = "Slug uses illegal characters!" };
                 }
 
                 if (shortenedLinks.ContainsKey(slug))
                 {
-                    Console.WriteLine("[WARN] Slug already exists!", slug);
+                    Console.WriteLine("[WARN] Slug already exists!");
                     return new AddLinkResult() { Success = false, Error = "Slug already exists!" };
                 }
 
