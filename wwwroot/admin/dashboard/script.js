@@ -27,8 +27,7 @@ async function reload() {
     const response = await fetch('/api/links', { method: 'GET' });
 
     if (response.status == 401) {
-        var path = window.location.pathname
-        window.location.pathname = path.substr(0, path.length - 10)
+        window.location.href = "../"
         return;
     }
 
@@ -94,7 +93,7 @@ async function reload() {
         copyElem.value = "Copy";
         copyElem.style.width = "50%";
         copyElem.onclick = function () {
-            navigator.clipboard.writeText(window.location.host + "/" + key);
+            navigator.clipboard.writeText(window.location.origin + "/" + key);
         }
 
         actionsElem.appendChild(deleteElem);

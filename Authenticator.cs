@@ -45,9 +45,6 @@ namespace LinkyShrinky
                     Save();
                 }
 
-                if (username != userCreds.username)
-                    return false;
-
                 var passwordResult = passwordHasher.VerifyHashedPassword(username, userCreds.hashedPassword, password);
 
                 if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)

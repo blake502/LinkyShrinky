@@ -30,8 +30,7 @@ async function reload() {
     const response = await fetch('/api/keys', { method: 'GET' });
 
     if (response.status == 401) {
-        var path = window.location.pathname
-        window.location.pathname = path.substr(0, path.length - 10)
+        window.location.href = "../../"
         return;
     }
 

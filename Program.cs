@@ -7,7 +7,6 @@ using System.Net;
 using System.Threading.RateLimiting;
 using IPNetwork = System.Net.IPNetwork;
 using Microsoft.AspNetCore.DataProtection;
-using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 
 namespace LinkyShrinky
@@ -301,7 +300,7 @@ namespace LinkyShrinky
                     return Results.NotFound();
             }).RequireAuthorization("AdminCookieOnly");
 
-            app.MapGet("api/links", () =>
+            app.MapGet("api/links", (HttpContext context) =>
             {
                 context.Response.Headers.CacheControl = "no-store";
                 return linkStore.Snapshot();
@@ -318,7 +317,8 @@ namespace LinkyShrinky
                 else
                 {
                     Console.WriteLine("Failed to add!");
-                    return Results.Conflict(result);
+                    return Results.BadRequest(result);
+                    //TODO: Results.Conflict on "slug already exists" error
                 }
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
@@ -362,8 +362,6 @@ namespace LinkyShrinky
     public record CreateKeyRequest(string? Name);
     public class AddLinkRequest
     {
-        [Required]
-        [Url]
         public string Redirect { get; init; } = "";
 
         public string? Slug { get; init; }
