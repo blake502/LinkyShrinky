@@ -238,7 +238,7 @@ namespace LinkyShrinky
                 else
                 {
                     Console.WriteLine("Failed to add!");
-                    return Results.Conflict(result.Error);
+                    return Results.Conflict(result);
                 }
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
