@@ -105,7 +105,7 @@ namespace LinkyShrinky
                 Uri? uri;
                 if (!Uri.TryCreate(redirect, UriKind.Absolute, out uri) || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
                 {
-                    Console.WriteLine("[WARN] Could not create URI!", slug);
+                    Console.WriteLine("[WARN] Could not create URI!");
                     return new AddLinkResult() { Success = false, Error = "Could not create URI!" };
                 }
 
