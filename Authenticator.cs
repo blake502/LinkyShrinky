@@ -34,24 +34,31 @@ namespace LinkyShrinky
 
         public bool Verify(string username, string password)
         {
-            username = username.ToLower();
-
-            if (userCreds.username == null || userCreds.hashedPassword == null)
+            lock (credsLock)
             {
-                userCreds.hashedPassword = passwordHasher.HashPassword(username, password);
-                userCreds.username = username;
-                Save();
+                username = username.ToLowerInvariant();
+
+                if (userCreds.username == null || userCreds.hashedPassword == null)
+                {
+                    userCreds.hashedPassword = passwordHasher.HashPassword(username, password);
+                    userCreds.username = username;
+                    Save();
+                }
+
+                if (username != userCreds.username)
+                    return false;
+
+                var passwordResult = passwordHasher.VerifyHashedPassword(username, userCreds.hashedPassword, password);
+
+                if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
+                {
+                    userCreds.hashedPassword = passwordHasher.HashPassword(username, password);
+                    Save();
+                    return true;
+                }
+
+                return passwordResult == PasswordVerificationResult.Success;
             }
-
-            var passwordResult = passwordHasher.VerifyHashedPassword(username, userCreds.hashedPassword, password);
-
-            if (passwordResult == PasswordVerificationResult.SuccessRehashNeeded)
-            {
-                userCreds.hashedPassword = passwordHasher.HashPassword(username, password);
-                return true;
-            }
-
-            return passwordResult == PasswordVerificationResult.Success;
         }
     }
 

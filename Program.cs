@@ -180,7 +180,7 @@ namespace LinkyShrinky
                     //Issue cookie
                     var claims = new[]
                     {
-                        new Claim(ClaimTypes.Name, username),
+                        new Claim(ClaimTypes.Name, username.ToLowerInvariant()),
                         new Claim(ClaimTypes.Role, "Admin")
                     };
 
