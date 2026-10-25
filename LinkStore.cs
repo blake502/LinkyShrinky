@@ -1,13 +1,15 @@
 ﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace LinkyShrinky
 {
     public class LinkStore
     {
-        public Dictionary<string, shortenedLink> shortenedLinks;
+        Dictionary<string, shortenedLink> shortenedLinks;
         readonly object linksLock = new();
         string jsonFilePath;
         Random random;
+        Regex slugRegex = new Regex(@"^[A-Za-z0-9_-]{1,64}$");
 
         private volatile bool _dirty;
 
@@ -21,6 +23,12 @@ namespace LinkyShrinky
                 string json = File.ReadAllText(jsonFilePath);
                 shortenedLinks = JsonSerializer.Deserialize<Dictionary<string, shortenedLink>>(json) ?? new();
             }
+        }
+
+        public Dictionary<string, shortenedLink> Snapshot()
+        {
+            lock (linksLock)
+                return shortenedLinks.ToDictionary(kv => kv.Key, kv => kv.Value with { });
         }
 
         public string? ResolveRedirect(string slug)
@@ -82,16 +90,22 @@ namespace LinkyShrinky
         {
             lock (linksLock)
             {
+                if (!slugRegex.IsMatch(slug))
+                {
+                    Console.WriteLine("[ERROR] Slug uses illegal characters!", slug);
+                    return new AddLinkResult() { Success = false, Error = "Slug uses illegal characters!" };
+                }
+
                 if (shortenedLinks.ContainsKey(slug))
                 {
-                    Console.WriteLine("[WARN]: Tried to add slug {0}, but it already exists!", slug);
+                    Console.WriteLine("[WARN] Slug already exists!", slug);
                     return new AddLinkResult() { Success = false, Error = "Slug already exists!" };
                 }
 
                 Uri? uri;
                 if (!Uri.TryCreate(redirect, UriKind.Absolute, out uri) || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
                 {
-                    Console.WriteLine("[WARN]: Could not create URI!", slug);
+                    Console.WriteLine("[WARN] Could not create URI!", slug);
                     return new AddLinkResult() { Success = false, Error = "Could not create URI!" };
                 }
 
@@ -112,13 +126,13 @@ namespace LinkyShrinky
                     while (shortenedLinks.ContainsKey(slug));
                 }
 
-                shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = uri.ToString() });
+                shortenedLinks.Add(slug, new shortenedLink() { Hits = 0, Redirect = uri.AbsoluteUri });
                 Save();
-                return new AddLinkResult() { Success = true, Slug = slug, Redirect = uri.ToString() };
+                return new AddLinkResult() { Success = true, Slug = slug, Redirect = uri.AbsoluteUri };
             }
         }
     }
-    public class shortenedLink
+    public record shortenedLink
     {
         public string Redirect { get; set; }
         public int Hits { get; set; }
