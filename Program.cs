@@ -7,6 +7,7 @@ using System.Net;
 using System.Threading.RateLimiting;
 using IPNetwork = System.Net.IPNetwork;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace LinkyShrinky
 {
@@ -204,7 +205,7 @@ namespace LinkyShrinky
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             //TODO: Probably not regex this. Find another way to reserve admin path
-            app.MapGet("/{slug:regex(^(?!" + adminPage + "$).+)}", (string slug, HttpContext context) =>
+            app.MapGet("/{slug:regex(^(?!" + Regex.Escape(adminPage) + "$).+)}", (string slug, HttpContext context) =>
             {
                 string clientIP = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
