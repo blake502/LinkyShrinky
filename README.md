@@ -20,6 +20,9 @@ Alternatively, you may use the API directly by collecting an API key from the ad
 - POST `/api/links`
 - DELETE `/api/links/{slug}`
 
+To use the API, you must provide the API key in the header:
+`Authorization: Bearer key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+
 ## GET `/api/links`
 Returns a list of all shortened links.
 
