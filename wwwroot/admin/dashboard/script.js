@@ -1,0 +1,107 @@
+﻿window.onload = function () {
+    const form = document.getElementById("form");
+
+    form.addEventListener("submit", async e => {
+        e.preventDefault();
+
+        const data = {
+            redirect: form.redirect.value,
+            slug: form.slug.value
+        };
+
+        const response = await fetch("/api/links", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        reload();
+    })
+
+    reload();
+}
+
+async function reload() {
+    const response = await fetch('/api/links', { method: 'GET' });
+
+    if (response.status == 401) {
+        var path = window.location.pathname
+        window.location.pathname = path.substr(0, path.length - 10)
+        return;
+    }
+
+    const data = await response.json();
+
+    const tableBodyElem = document.getElementById("tablebody");
+
+    tableBodyElem.innerHTML = "";
+
+    const keys = Object.keys(data);
+    for (var i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const value = data[key];
+
+        var row = document.createElement("tr");
+
+        var slugElem = document.createElement("td");
+        slugElem.textContent = key;
+        row.appendChild(slugElem);
+
+        var redirectElem = document.createElement("td");
+        var redirectLinkElem = document.createElement("a");
+        var link = value.redirect
+        redirectLinkElem.href = link;
+        redirectLinkElem.textContent = link;
+        redirectElem.appendChild(redirectLinkElem);
+        row.appendChild(redirectElem);
+
+        var hitsElem = document.createElement("td");
+        hitsElem.textContent = value.hits;
+        row.appendChild(hitsElem);
+
+        var createdElem = document.createElement("td");
+        createdElem.textContent = new Date(value.created).toLocaleString();
+        row.appendChild(createdElem);
+
+        var lastHitElem = document.createElement("td");
+        var lastHit = value.lastHit;
+        if (lastHit == null)
+            lastHitElem.textContent = "N/A";
+        else
+            lastHitElem.textContent = new Date(lastHit).toLocaleString();
+        row.appendChild(lastHitElem);
+
+        var actionsElem = document.createElement("td");
+
+        var deleteElem = document.createElement("input");
+        deleteElem.type = "submit";
+        deleteElem.value = "Delete";
+        deleteElem.style.width = "50%";
+        deleteElem.onclick = async function () {
+            const response = await fetch("/api/links/" + key, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            reload();
+        }
+
+        var copyElem = document.createElement("input");
+        copyElem.type = "submit";
+        copyElem.value = "Copy";
+        copyElem.style.width = "50%";
+        copyElem.onclick = function () {
+            navigator.clipboard.writeText(window.location.host + "/" + key);
+        }
+
+        actionsElem.appendChild(deleteElem);
+        actionsElem.appendChild(copyElem);
+
+        row.appendChild(actionsElem);
+
+        tableBodyElem.appendChild(row);
+    }
+}

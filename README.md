@@ -20,6 +20,9 @@ Alternatively, you may use the API directly by collecting an API key from the ad
 - POST `/api/links`
 - DELETE `/api/links/{slug}`
 
+To use the API, you must provide the API key in the header:
+`Authorization: Bearer key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+
 ## GET `/api/links`
 Returns a list of all shortened links.
 
@@ -91,7 +94,6 @@ services:
       - 8080:8080
     volumes:
       - ./config:/app/config
-      - ./keys:/home/app/.aspnet/DataProtection-Keys
     environment:
       - ADMIN_PAGE=admin #The admin dashboard path
       - DOTNET_GCHeapHardLimit=134217728 #Limit RAM usage to 128MiB, useful for systems with little RAM (it rarely exceeds even half of this limit)
@@ -143,10 +145,8 @@ server {
 ```
 
 # TODO
-- Clean up API
 - Clean up first time setup admin account
 - Consider IPv6 compatibility
-- Cookie hardening
 - Fix admin path reservation
 - File locking
 - Improve random slug generation
