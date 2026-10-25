@@ -67,7 +67,9 @@ Creates a new shortened link.
 Deletes an existing shortened link.
 
 ### Response
-`204 No Content`
+`204 No Content` if the slug is deleted successfully
+
+`404 Not Found` if the slug does not exist
 
 # Docker
 This service is designed to be used with Docker.

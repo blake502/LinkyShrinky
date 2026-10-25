@@ -247,9 +247,9 @@ namespace LinkyShrinky
                 bool result = linkStore.Delete(slug);
 
                 if (result)
-                    return Results.NotFound();
+                    return Results.NoContent();
                 else
-                    return Results.Conflict();
+                    return Results.NotFound();
             }).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
             PeriodicTimer saveTimer = new PeriodicTimer(TimeSpan.FromSeconds(15));
